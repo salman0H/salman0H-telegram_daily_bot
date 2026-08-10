@@ -7,7 +7,7 @@ from src import config
 
 def get_trending_song():
     if not config.SPOTIFY_CLIENT_ID or not config.SPOTIFY_CLIENT_SECRET:
-        return "Hans Zimmer - Time"
+        return None
 
     auth_str = f"{config.SPOTIFY_CLIENT_ID}:{config.SPOTIFY_CLIENT_SECRET}"
     b64_auth = base64.b64encode(auth_str.encode()).decode()
@@ -35,9 +35,12 @@ def get_trending_song():
         return f"{item['artists'][0]['name']} - {item['name']}"
     except Exception as e:
         print(f"Spotify Fetch Error: {e}")
-        return "Hans Zimmer - Interstellar Main Theme"
+        return None
 
 def download_audio(query):
+    if not query:
+        return None
+        
     output_tmpl = "downloaded_song.%(ext)s"
     search_query = f"ytsearch1:{query} audio"
     
@@ -58,3 +61,23 @@ def download_audio(query):
         print(f"yt-dlp error: {result.stderr}")
         return None
     return "downloaded_song.mp3"
+
+def get_apple_music_top_5():
+    url = "https://itunes.apple.com/us/rss/topsongs/limit=5/json"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            entries = data.get("feed", {}).get("entry", [])
+            if not entries:
+                return "اطلاعات چارت اپل موزیک در دسترس نیست."
+            
+            result_text = "🎧 <b>۵ آهنگ برتر امروز Apple Music:</b>\n\n"
+            for idx, entry in enumerate(entries, 1):
+                title = entry.get("im:name", {}).get("label", "Unknown")
+                artist = entry.get("im:artist", {}).get("label", "Unknown")
+                result_text += f"{idx}. {artist} - {title}\n"
+            return result_text.strip()
+    except Exception as e:
+        print(f"Apple Music Fetch Error: {e}")
+        return "خطا در دریافت لیست آهنگ‌های برتر."

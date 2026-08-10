@@ -36,11 +36,13 @@ def run():
         telegram_sender.send_message(s_msg.strip())
 
     target_song = song.get_trending_song()
-    audio_file = song.download_audio(target_song)
+    audio_file = song.download_audio(target_song) if target_song else None
+    
     if audio_file:
         telegram_sender.send_audio(audio_file, caption=f"🎵 <b>آهنگ روز</b>\n\n{target_song}")
     else:
-        telegram_sender.send_message("🎵 <b>آهنگ روز</b>\n\nامروز آهنگ جدیدی برای دانلود یافت نشد.")
+        apple_top_5 = song.get_apple_music_top_5()
+        telegram_sender.send_message(apple_top_5)
 
 if __name__ == "__main__":
     run()
