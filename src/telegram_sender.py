@@ -3,6 +3,7 @@ import json
 import uuid
 import os
 import re
+import html
 import mimetypes
 import urllib.request
 import urllib.error
@@ -20,13 +21,22 @@ def _resolve_target():
     sys.exit("Critical: Valid TELEGRAM_CHANNEL_ID or TELEGRAM_USER_ID not found.")
 
 def _sanitize_for_telegram_html(text: str) -> str:
-    # Convert ```language ... ``` to <pre><code class="language-language">...</code></pre>
+    # 1. Clean hallucinated HTML tags
+    text = text.replace('<blockquote>', '').replace('</blockquote>', '')
+    text = text.replace('<b>', '**').replace('</b>', '**')
+    
+    # 2. Escape dangerous characters (<, >, &) to prevent Telegram 400 Errors
+    text = html.escape(text, quote=False)
+    
+    # 3. Strip Markdown headings
+    text = re.sub(r'^\s*#+\s*', '', text, flags=re.MULTILINE)
+    
+    # 4. Safely convert Markdown code and bold syntax to Telegram HTML
     text = re.sub(r'```(\w+)?\n(.*?)\n```', r'<pre><code class="language-\1">\2</code></pre>', text, flags=re.DOTALL)
-    # Convert `...` to <code>...</code>
     text = re.sub(r'`(.*?)`', r'<code>\1</code>', text)
-    # Convert **...** to <b>...</b>
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    return text
+    
+    return text.strip()
 
 def send_message(text: str):
     chat_id = _resolve_target()
@@ -50,7 +60,6 @@ def send_message(text: str):
         with urllib.request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        # Fallback without HTML formatting if structural error occurs
         payload.pop("parse_mode", None)
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
