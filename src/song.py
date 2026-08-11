@@ -73,7 +73,7 @@ def get_apple_music_top_5():
                 return "اطلاعات چارت اپل موزیک در دسترس نیست."
             
             numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
-            result_text = "🎧 <b>۵ آهنگ برتر امروز (Apple Music):</b>\n\n"
+            result_text = "🎧 **۵ آهنگ برتر امروز (Apple Music):**\n\n"
             
             for idx, entry in enumerate(entries[:5]):
                 title = entry.get("im:name", {}).get("label", "Unknown")
@@ -81,7 +81,7 @@ def get_apple_music_top_5():
                 genre = entry.get("category", {}).get("attributes", {}).get("label", "General")
                 num_emoji = numbers[idx] if idx < 5 else f"{idx+1}."
                 
-                result_text += f"{num_emoji} <b>{title}</b>\n👤 اثری از: {artist}\n🎶 ژانر: {genre}\n\n"
+                result_text += f"{num_emoji} **{title}**\n👤 اثری از: {artist}\n🎶 ژانر: {genre}\n\n"
                 
             return result_text.strip()
     except Exception as e:
