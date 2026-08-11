@@ -3,7 +3,7 @@ import urllib.request
 from src import config
 
 def get_sports_results():
-    results = {"Soccer": [], "Basketball": [], "Volleyball": []}
+    results = {"Soccer": [], "Basketball": []}
     headers = {"User-Agent": "Mozilla/5.0"}
     
     if config.SPORTRADAR_SOCCER_API_KEY:
@@ -12,10 +12,19 @@ def get_sports_results():
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                for s in data.get("summaries", [])[:3]:
-                    competitors = s.get("sport_event", {}).get("competitors", [])
+                for s in data.get("summaries", [])[:5]:
+                    event = s.get("sport_event", {})
+                    status = s.get("sport_event_status", {})
+                    competitors = event.get("competitors", [])
+                    
                     if len(competitors) == 2:
-                        results["Soccer"].append(f"{competitors[0]['name']} ⚽ {competitors[1]['name']}")
+                        home = competitors[0].get("name")
+                        away = competitors[1].get("name")
+                        h_score = status.get("home_score", 0)
+                        a_score = status.get("away_score", 0)
+                        match_status = status.get("match_status", "ended")
+                        
+                        results["Soccer"].append(f"{home} {h_score} - {a_score} {away} ({match_status})")
         except Exception as e:
             print(f"Soccer Fetch Error: {e}")
 
@@ -25,10 +34,18 @@ def get_sports_results():
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                for s in data.get("summaries", [])[:3]:
-                    competitors = s.get("sport_event", {}).get("competitors", [])
+                for s in data.get("summaries", [])[:5]:
+                    event = s.get("sport_event", {})
+                    status = s.get("sport_event_status", {})
+                    competitors = event.get("competitors", [])
+                    
                     if len(competitors) == 2:
-                        results["Basketball"].append(f"{competitors[0]['name']} 🏀 {competitors[1]['name']}")
+                        home = competitors[0].get("name")
+                        away = competitors[1].get("name")
+                        h_score = status.get("home_score", 0)
+                        a_score = status.get("away_score", 0)
+                        
+                        results["Basketball"].append(f"{home} {h_score} - {a_score} {away}")
         except Exception as e:
             print(f"Basketball Fetch Error: {e}")
 
