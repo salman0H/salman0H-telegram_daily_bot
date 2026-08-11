@@ -72,12 +72,17 @@ def get_apple_music_top_5():
             if not entries:
                 return "اطلاعات چارت اپل موزیک در دسترس نیست."
             
-            result_text = "🎧 <b>۵ آهنگ برتر امروز Apple Music:</b>\n\n"
-            for idx, entry in enumerate(entries, 1):
+            numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+            result_text = "🎧 <b>۵ آهنگ برتر امروز (Apple Music):</b>\n\n"
+            
+            for idx, entry in enumerate(entries[:5]):
                 title = entry.get("im:name", {}).get("label", "Unknown")
                 artist = entry.get("im:artist", {}).get("label", "Unknown")
                 genre = entry.get("category", {}).get("attributes", {}).get("label", "General")
-                result_text += f"{idx}. {artist} - {title} <i>[{genre}]</i>\n"
+                num_emoji = numbers[idx] if idx < 5 else f"{idx+1}."
+                
+                result_text += f"{num_emoji} <b>{title}</b>\n👤 اثری از: {artist}\n🎶 ژانر: {genre}\n\n"
+                
             return result_text.strip()
     except Exception as e:
         print(f"Apple Music Fetch Error: {e}")
