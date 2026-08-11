@@ -1,13 +1,17 @@
 import json
 import urllib.request
+from datetime import datetime, timedelta
 from src import config
 
 def get_sports_results():
     results = {"Soccer": [], "Basketball": []}
     headers = {"User-Agent": "Mozilla/5.0"}
     
+    # محاسبه تاریخ دیروز برای دریافت نتایج قطعی
+    yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
+    
     if config.SPORTRADAR_SOCCER_API_KEY:
-        url = f"https://api.sportradar.com/soccer/trial/v4/en/schedules/live/summaries.json?api_key={config.SPORTRADAR_SOCCER_API_KEY}"
+        url = f"https://api.sportradar.com/soccer/trial/v4/en/schedules/{yesterday}/summaries.json?api_key={config.SPORTRADAR_SOCCER_API_KEY}"
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
@@ -18,18 +22,17 @@ def get_sports_results():
                     competitors = event.get("competitors", [])
                     
                     if len(competitors) == 2:
-                        home = competitors[0].get("name")
-                        away = competitors[1].get("name")
-                        h_score = status.get("home_score", 0)
-                        a_score = status.get("away_score", 0)
-                        match_status = status.get("match_status", "ended")
+                        home = competitors[0].get("name", "Home")
+                        away = competitors[1].get("name", "Away")
+                        h_score = status.get("home_score", "?")
+                        a_score = status.get("away_score", "?")
                         
-                        results["Soccer"].append(f"{home} {h_score} - {a_score} {away} ({match_status})")
+                        results["Soccer"].append(f"{home} {h_score} - {a_score} {away}")
         except Exception as e:
             print(f"Soccer Fetch Error: {e}")
 
     if config.SPORTRADAR_BASKETBALL_API_KEY:
-        url = f"https://api.sportradar.com/basketball/trial/v2/en/schedules/live/summaries.json?api_key={config.SPORTRADAR_BASKETBALL_API_KEY}"
+        url = f"https://api.sportradar.com/basketball/trial/v2/en/schedules/{yesterday}/summaries.json?api_key={config.SPORTRADAR_BASKETBALL_API_KEY}"
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
@@ -40,10 +43,10 @@ def get_sports_results():
                     competitors = event.get("competitors", [])
                     
                     if len(competitors) == 2:
-                        home = competitors[0].get("name")
-                        away = competitors[1].get("name")
-                        h_score = status.get("home_score", 0)
-                        a_score = status.get("away_score", 0)
+                        home = competitors[0].get("name", "Home")
+                        away = competitors[1].get("name", "Away")
+                        h_score = status.get("home_score", "?")
+                        a_score = status.get("away_score", "?")
                         
                         results["Basketball"].append(f"{home} {h_score} - {a_score} {away}")
         except Exception as e:
