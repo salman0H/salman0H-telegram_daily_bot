@@ -7,12 +7,12 @@ def run():
     if weather_data and weather_data["current"]["temp"] != "N/A":
         current = weather_data["current"]
         w_msg = (
-            "🌤 <b>وضعیت آب‌وهوا</b>\n\n"
+            "🌤 **وضعیت آب‌وهوا**\n\n"
             f"دما: {current.get('temp')}°C\n"
             f"رطوبت: {current.get('humidity')}٪\n"
             f"باد: {current.get('wind_speed')} m/s\n"
             f"آسمان: {current.get('description')}\n\n"
-            "⏱ <b>پیش‌بینی ساعات آینده:</b>\n"
+            "⏱ **پیش‌بینی ساعات آینده:**\n"
         )
         
         if weather_data["forecast"]:
@@ -26,7 +26,7 @@ def run():
     # 2. Daily Insight
     try:
         insight = writer.generate_daily_insight()
-        telegram_sender.send_message(f"💡 <b>دانش روز</b>\n\n{insight}")
+        telegram_sender.send_message(f"💡 **دانش روز**\n\n{insight}")
     except Exception as e:
         print(f"Insight Error: {e}")
 
@@ -34,15 +34,15 @@ def run():
     news_items = news.get_diverse_news()
     if news_items:
         news_text = writer.elaborate_news(news_items)
-        telegram_sender.send_message(f"📰 <b>اخبار امروز</b>\n\n{news_text}")
+        telegram_sender.send_message(f"📰 **اخبار امروز**\n\n{news_text}")
 
     # 4. Sports (Yesterday's Results)
     sports_data = sports.get_sports_results()
     if any(sports_data.values()):
-        s_msg = "🏆 <b>نتایج مسابقات دیروز</b>\n\n"
+        s_msg = "🏆 **نتایج مسابقات دیروز**\n\n"
         for sport, matches in sports_data.items():
             if matches:
-                s_msg += f"▪️ <b>{sport}</b>\n"
+                s_msg += f"▪️ **{sport}**\n"
                 for m in matches:
                     s_msg += f"  - {m}\n"
                 s_msg += "\n"
@@ -53,7 +53,7 @@ def run():
     audio_file = song.download_audio(target_song) if target_song else None
     
     if audio_file:
-        telegram_sender.send_audio(audio_file, caption=f"🎵 <b>آهنگ روز</b>\n\n{target_song}")
+        telegram_sender.send_audio(audio_file, caption=f"🎵 **آهنگ روز**\n\n{target_song}")
     else:
         apple_top_5 = song.get_apple_music_top_5()
         telegram_sender.send_message(apple_top_5)
