@@ -20,11 +20,13 @@ def _resolve_target():
     sys.exit("Critical: Valid TELEGRAM_CHANNEL_ID or TELEGRAM_USER_ID not found.")
 
 def _sanitize_for_telegram_html(text: str) -> str:
-    # Convert ```language ... ``` to <pre><code class="language-language">...</code></pre>
+    # Remove markdown header tokens (#, ##, ###)
+    text = re.sub(r'^\s*#+\s*', '', text, flags=re.MULTILINE)
+    # Convert code blocks ```language ... ``` to <pre><code class="language-language">...</code></pre>
     text = re.sub(r'```(\w+)?\n(.*?)\n```', r'<pre><code class="language-\1">\2</code></pre>', text, flags=re.DOTALL)
-    # Convert `...` to <code>...</code>
+    # Convert inline code `...` to <code>...</code>
     text = re.sub(r'`(.*?)`', r'<code>\1</code>', text)
-    # Convert **...** to <b>...</b>
+    # Convert bold **...** to <b>...</b>
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
     return text
 
@@ -50,7 +52,6 @@ def send_message(text: str):
         with urllib.request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        # Fallback without HTML formatting if structural error occurs
         payload.pop("parse_mode", None)
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
