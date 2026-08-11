@@ -9,6 +9,7 @@ def _clean_output(text: str) -> str:
     text = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]+', '', text)
     text = text.replace('\xa0', ' ').replace('\u200b', '')
     text = re.sub(r'^\s*#+\s*', '', text, flags=re.MULTILINE)
+    text = text.replace('##', '').replace('#', '')
     text = re.sub(r'\n\s*\n(http)', r'\n\n\1', text)
     return text.strip()
 
@@ -88,9 +89,11 @@ def generate_daily_insight() -> str:
         f"2. {selected_topics[1]}\n"
         f"3. {selected_topics[2]}\n"
         f"4. {selected_topics[3]}\n\n"
-        "STRICT FORMAT:\n"
-        "- Category title MUST be formatted ONLY as <b>Title</b> (NO # OR ## Markdown headings!).\n"
-        "- The insight content MUST be inside a <blockquote> tag.\n"
-        "- For coding topics, include code snippets using ```language ... ``` markdown."
+        "STRICT FORMAT RULES:\n"
+        "- DO NOT use <blockquote> tags for the insights. DO NOT use # or ## markdown headings.\n"
+        "- Format each topic's title exactly like this: 🔹 <b>[Topic Name]</b>\n"
+        "- Write a highly informative, expert-level paragraph (3-4 sentences) directly below the title as plain text.\n"
+        "- For coding topics, include code snippets using standard markdown: ```language ... ```\n"
+        "- Separate each topic section with a double blank line (\\n\\n)."
     )
     return _call_groq(prompt, temperature=0.3)
