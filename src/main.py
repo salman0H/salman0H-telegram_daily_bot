@@ -36,15 +36,15 @@ def run():
         news_text = writer.elaborate_news(news_items)
         telegram_sender.send_message(f"📰 <b>اخبار امروز</b>\n\n{news_text}")
 
-    # 4. Sports
+    # 4. Sports (Yesterday's Results)
     sports_data = sports.get_sports_results()
     if any(sports_data.values()):
-        s_msg = "🏆 <b>نتایج زنده ورزشی</b>\n\n"
+        s_msg = "🏆 <b>نتایج مسابقات دیروز</b>\n\n"
         for sport, matches in sports_data.items():
             if matches:
                 s_msg += f"▪️ <b>{sport}</b>\n"
                 for m in matches:
-                    s_msg += f"<blockquote>{m}</blockquote>\n"
+                    s_msg += f"  - {m}\n"
                 s_msg += "\n"
         telegram_sender.send_message(s_msg.strip())
 
