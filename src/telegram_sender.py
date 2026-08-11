@@ -20,13 +20,10 @@ def _resolve_target():
     sys.exit("Critical: Valid TELEGRAM_CHANNEL_ID or TELEGRAM_USER_ID not found.")
 
 def _sanitize_for_telegram_html(text: str) -> str:
-    # Remove markdown header tokens (#, ##, ###)
     text = re.sub(r'^\s*#+\s*', '', text, flags=re.MULTILINE)
-    # Convert code blocks ```language ... ``` to <pre><code class="language-language">...</code></pre>
+    text = text.replace('##', '').replace('#', '')
     text = re.sub(r'```(\w+)?\n(.*?)\n```', r'<pre><code class="language-\1">\2</code></pre>', text, flags=re.DOTALL)
-    # Convert inline code `...` to <code>...</code>
     text = re.sub(r'`(.*?)`', r'<code>\1</code>', text)
-    # Convert bold **...** to <b>...</b>
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
     return text
 
