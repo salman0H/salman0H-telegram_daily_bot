@@ -76,7 +76,8 @@ def get_apple_music_top_5():
             for idx, entry in enumerate(entries, 1):
                 title = entry.get("im:name", {}).get("label", "Unknown")
                 artist = entry.get("im:artist", {}).get("label", "Unknown")
-                result_text += f"{idx}. {artist} - {title}\n"
+                genre = entry.get("category", {}).get("attributes", {}).get("label", "General")
+                result_text += f"{idx}. {artist} - {title} <i>[{genre}]</i>\n"
             return result_text.strip()
     except Exception as e:
         print(f"Apple Music Fetch Error: {e}")
