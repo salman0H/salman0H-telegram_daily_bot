@@ -17,8 +17,9 @@ MASHHAD_LAT = 36.2605
 MASHHAD_LON = 59.6168
 
 GROQ_MODELS = [
-    "mixtral-8x7b-32768",
-    "llama-3.1-8b-instant",
-    "gemma2-9b-it"
+    "openai/gpt-oss-120b",
+    "llama-3.1-70b-versatile",
+    "llama3-8b-8192",
+    "mixtral-8x7b-32768"
 ]
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
