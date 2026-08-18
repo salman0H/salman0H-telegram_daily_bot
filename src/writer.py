@@ -22,52 +22,69 @@ def _clean_output(text: str) -> str:
 
     return text.strip()
 
-def _call_groq(prompt: str, temperature: float = 0.2) -> str:
-    payload = {
-        "model": config.GROQ_MODEL,
-        "messages": [
-            {
-                "role": "system", 
-                "content": (
-                    "You are a strict Persian news and knowledge editor. "
-                    "MANDATORY RULES:\n"
-                    "1. Output exclusively in pure Persian.\n"
-                    "2. NEVER mix English and Persian letters in a single word.\n"
-                    "3. NEVER use HTML tags like <i> or <blockquote>. ONLY <b> is allowed for titles.\n"
-                    "4. NEVER use Markdown headings like # or ##."
-                )
-            },
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": temperature,
-        "max_tokens": 600
-    }
-    headers = {
-        "Authorization": f"Bearer {config.GROQ_API_KEY}",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(config.GROQ_API_URL, data=data, headers=headers, method="POST")
+def _call_groq(prompt: str, temperature: float = 0.2, fallback_data: str = None) -> str:
+    for model in config.GROQ_MODELS:
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system", 
+                    "content": (
+                        "You are a strict Persian news and knowledge editor. "
+                        "MANDATORY RULES:\n"
+                        "1. Output exclusively in pure Persian.\n"
+                        "2. NEVER mix English and Persian letters in a single word.\n"
+                        "3. NEVER use HTML tags like <i> or <blockquote>. ONLY <b> is allowed for titles.\n"
+                        "4. NEVER use Markdown headings like # or ##."
+                    )
+                },
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": temperature,
+            "max_tokens": 600
+        }
+        headers = {
+            "Authorization": f"Bearer {config.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0"
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(config.GROQ_API_URL, data=data, headers=headers, method="POST")
 
-    try:
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-            choice = result["choices"][0]
-            finish_reason = choice.get("finish_reason", "unknown")
-            raw_text = choice.get("message", {}).get("content", "")
-            
-            print(f"[Groq API] finish_reason={finish_reason}, content_length={len(raw_text)}")
-            if finish_reason == "length":
-                print("[Groq Warning] Response was truncated! Increase max_tokens.")
+        try:
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                choice = result["choices"][0]
+                finish_reason = choice.get("finish_reason", "unknown")
+                raw_text = choice.get("message", {}).get("content", "")
                 
-            return _clean_output(raw_text)
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Groq API Error: {e.read().decode('utf-8')}")
+                print(f"[Groq API] Model: {model}, finish_reason: {finish_reason}")
+                if finish_reason == "length":
+                    print("[Groq Warning] Response was truncated! Increase max_tokens.")
+                    
+                return _clean_output(raw_text)
+        except urllib.error.HTTPError as e:
+            err_str = e.read().decode('utf-8')
+            print(f"[Groq API Error] Model '{model}' failed: {err_str}")
+            continue
+        except Exception as e:
+            print(f"[Network Error] {e}")
+            continue
+
+    print("Critical: All Groq models failed. Executing zero-data-loss fallback.")
+    if fallback_data:
+        return fallback_data
+    raise RuntimeError("Groq API Exhausted and no fallback data provided.")
 
 def elaborate_news(news_data: dict) -> str:
     if not news_data:
         return "خبر جدیدی یافت نشد."
+
+    raw_fallback = ""
+    for category, items in news_data.items():
+        raw_fallback += f"<b>{category}</b>\n"
+        for item in items:
+            raw_fallback += f"🔹 <b>{item.get('title', '')}</b>\n{item.get('summary', '')}\n{item.get('link', '')}\n\n"
 
     prompt = (
         "Format the news into Persian updates.\n"
@@ -79,7 +96,7 @@ def elaborate_news(news_data: dict) -> str:
         "5. DO NOT use HTML tags (no <blockquote>, no <i>). Use ONLY <b> for bold.\n\n"
         f"Data: {json.dumps(news_data)}"
     )
-    return _call_groq(prompt, temperature=0.2)
+    return _call_groq(prompt, temperature=0.2, fallback_data=raw_fallback.strip())
 
 def generate_daily_insight() -> str:
     topics_pool = [
@@ -100,6 +117,8 @@ def generate_daily_insight() -> str:
     
     selected_topics = random.sample(topics_pool, 4)
     
+    fallback_insight = "سرویس پردازش زبان طبیعی در حال حاضر با افت ترافیک مواجه است. فردا با دانش روز جدید بازخواهیم گشت."
+
     prompt = (
         "Generate 4 distinct 'Daily Insights' in pure Persian based on these topics:\n"
         f"1. {selected_topics[0]}\n"
@@ -113,4 +132,4 @@ def generate_daily_insight() -> str:
         "- ABSOLUTELY NO HTML TAGS except <b>.\n"
         "- Separate each topic section with a double blank line (\\n\\n)."
     )
-    return _call_groq(prompt, temperature=0.3)
+    return _call_groq(prompt, temperature=0.3, fallback_data=fallback_insight)
