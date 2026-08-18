@@ -1,6 +1,5 @@
 import json
 import urllib.request
-import urllib.error
 from datetime import datetime
 from src import config
 
@@ -12,11 +11,9 @@ def get_mashhad_weather():
         "current": {"temp": "N/A", "humidity": "N/A", "description": "N/A", "wind_speed": "N/A"},
         "forecast": []
     }
-    
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
-        # Fetch Current Weather
         req_c = urllib.request.Request(current_url, headers=headers)
         with urllib.request.urlopen(req_c, timeout=10) as resp:
             data_c = json.loads(resp.read().decode("utf-8"))
@@ -27,7 +24,6 @@ def get_mashhad_weather():
                 "wind_speed": data_c["wind"]["speed"]
             }
 
-        # Fetch Hourly Forecast (3-hour intervals)
         req_f = urllib.request.Request(forecast_url, headers=headers)
         with urllib.request.urlopen(req_f, timeout=10) as resp:
             data_f = json.loads(resp.read().decode("utf-8"))
@@ -41,7 +37,7 @@ def get_mashhad_weather():
                     desc = item["weather"][0]["description"]
                     weather_info["forecast"].append(f"ساعت {time_str}: {temp}°C | {desc}")
                     
-    except Exception as e:
-        print(f"Weather Fetch Error: {e}")
+    except Exception:
+        pass
         
     return weather_info
