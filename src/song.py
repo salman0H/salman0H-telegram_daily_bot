@@ -33,8 +33,7 @@ def get_trending_song():
             
         item = track_res["albums"]["items"][0]
         return f"{item['artists'][0]['name']} - {item['name']}"
-    except Exception as e:
-        print(f"Spotify Fetch Error: {e}")
+    except Exception:
         return None
 
 def download_audio(query):
@@ -58,7 +57,6 @@ def download_audio(query):
     
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"yt-dlp error: {result.stderr}")
         return None
     return "downloaded_song.mp3"
 
@@ -73,7 +71,7 @@ def get_apple_music_top_5():
                 return "اطلاعات چارت اپل موزیک در دسترس نیست."
             
             numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
-            result_text = "🎧 **۵ آهنگ برتر امروز (Apple Music):**\n\n"
+            result_text = "🎧 **۵ آهنگ برتر امروز (Apple Music)**\n\n"
             
             for idx, entry in enumerate(entries[:5]):
                 title = entry.get("im:name", {}).get("label", "Unknown")
@@ -84,6 +82,5 @@ def get_apple_music_top_5():
                 result_text += f"{num_emoji} **{title}**\n👤 اثری از: {artist}\n🎶 ژانر: {genre}\n\n"
                 
             return result_text.strip()
-    except Exception as e:
-        print(f"Apple Music Fetch Error: {e}")
+    except Exception:
         return "خطا در دریافت لیست آهنگ‌های برتر."
