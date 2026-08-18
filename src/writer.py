@@ -6,9 +6,20 @@ import urllib.error
 from src import config
 
 def _clean_output(text: str) -> str:
+    if not text:
+        return text
+        
     text = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]+', '', text)
     text = text.replace('\xa0', ' ').replace('\u200b', '')
+    text = re.sub(r'^\s*#+\s*', '', text, flags=re.MULTILINE)
+    text = text.replace('##', '').replace('#', '')
     text = re.sub(r'\n\s*\n(http)', r'\n\n\1', text)
+
+    open_b_count = text.count('<b>')
+    close_b_count = text.count('</b>')
+    if open_b_count > close_b_count:
+        text = text.rstrip() + '</b>' * (open_b_count - close_b_count)
+
     return text.strip()
 
 def _call_groq(prompt: str, temperature: float = 0.2) -> str:
@@ -21,14 +32,15 @@ def _call_groq(prompt: str, temperature: float = 0.2) -> str:
                     "You are a strict Persian news and knowledge editor. "
                     "MANDATORY RULES:\n"
                     "1. Output exclusively in pure Persian.\n"
-                    "2. NEVER mix English and Persian letters in a single word. If a term is foreign, translate it entirely or write it completely in English.\n"
-                    "3. NEVER use HTML tags like <b>, <i>, or <blockquote>.\n"
+                    "2. NEVER mix English and Persian letters in a single word.\n"
+                    "3. NEVER use HTML tags like <i> or <blockquote>. ONLY <b> is allowed for titles.\n"
                     "4. NEVER use Markdown headings like # or ##."
                 )
             },
             {"role": "user", "content": prompt}
         ],
-        "temperature": temperature
+        "temperature": temperature,
+        "max_tokens": 600
     }
     headers = {
         "Authorization": f"Bearer {config.GROQ_API_KEY}",
@@ -41,7 +53,14 @@ def _call_groq(prompt: str, temperature: float = 0.2) -> str:
     try:
         with urllib.request.urlopen(req, timeout=45) as resp:
             result = json.loads(resp.read().decode("utf-8"))
-            raw_text = result["choices"][0]["message"]["content"]
+            choice = result["choices"][0]
+            finish_reason = choice.get("finish_reason", "unknown")
+            raw_text = choice.get("message", {}).get("content", "")
+            
+            print(f"[Groq API] finish_reason={finish_reason}, content_length={len(raw_text)}")
+            if finish_reason == "length":
+                print("[Groq Warning] Response was truncated! Increase max_tokens.")
+                
             return _clean_output(raw_text)
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"Groq API Error: {e.read().decode('utf-8')}")
@@ -53,11 +72,11 @@ def elaborate_news(news_data: dict) -> str:
     prompt = (
         "Format the news into Persian updates.\n"
         "CRITICAL RULES:\n"
-        "1. Write the category title using Markdown bold: **Category Name**.\n"
-        "2. Start each news item with a BOLD title: **Title Here**.\n"
+        "1. Write the category title using <b>Category Name</b>.\n"
+        "2. Start each news item with a BOLD title: <b>Title Here</b>.\n"
         "3. Follow with a 2-3 sentence description and 2 bullet points (🔹).\n"
         "4. Place the exact URL on a new line at the end.\n"
-        "5. DO NOT use HTML tags (no <blockquote>, no <b>). Use Markdown ** for bold.\n\n"
+        "5. DO NOT use HTML tags (no <blockquote>, no <i>). Use ONLY <b> for bold.\n\n"
         f"Data: {json.dumps(news_data)}"
     )
     return _call_groq(prompt, temperature=0.2)
@@ -88,10 +107,10 @@ def generate_daily_insight() -> str:
         f"3. {selected_topics[2]}\n"
         f"4. {selected_topics[3]}\n\n"
         "STRICT FORMAT RULES:\n"
-        "- Format each topic's title exactly like this: 🔹 **[Topic Name]**\n"
+        "- Format each topic's title exactly like this: 🔹 <b>[Topic Name]</b>\n"
         "- Write a highly informative, expert-level paragraph (3-4 sentences) directly below the title.\n"
         "- For coding topics, include code snippets using standard markdown: ```language ... ```\n"
-        "- ABSOLUTELY NO HTML TAGS.\n"
+        "- ABSOLUTELY NO HTML TAGS except <b>.\n"
         "- Separate each topic section with a double blank line (\\n\\n)."
     )
     return _call_groq(prompt, temperature=0.3)
