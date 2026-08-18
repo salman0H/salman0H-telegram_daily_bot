@@ -7,7 +7,6 @@ def get_sports_results():
     results = {"Soccer": [], "Basketball": []}
     headers = {"User-Agent": "Mozilla/5.0"}
     
-    # محاسبه تاریخ دیروز برای دریافت نتایج قطعی
     yesterday = (datetime.utcnow() - timedelta(days=1)).strftime('%Y-%m-%d')
     
     if config.SPORTRADAR_SOCCER_API_KEY:
@@ -28,8 +27,8 @@ def get_sports_results():
                         a_score = status.get("away_score", "?")
                         
                         results["Soccer"].append(f"{home} {h_score} - {a_score} {away}")
-        except Exception as e:
-            print(f"Soccer Fetch Error: {e}")
+        except Exception:
+            pass
 
     if config.SPORTRADAR_BASKETBALL_API_KEY:
         url = f"https://api.sportradar.com/basketball/trial/v2/en/schedules/{yesterday}/summaries.json?api_key={config.SPORTRADAR_BASKETBALL_API_KEY}"
@@ -49,7 +48,7 @@ def get_sports_results():
                         a_score = status.get("away_score", "?")
                         
                         results["Basketball"].append(f"{home} {h_score} - {a_score} {away}")
-        except Exception as e:
-            print(f"Basketball Fetch Error: {e}")
+        except Exception:
+            pass
 
     return results
