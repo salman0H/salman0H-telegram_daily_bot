@@ -16,5 +16,9 @@ SPORTRADAR_VOLLEYBALL_API_KEY = os.environ.get("SPORTRADAR_VOLLEYBALL_API_KEY", 
 MASHHAD_LAT = 36.2605
 MASHHAD_LON = 59.6168
 
-GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_MODELS = [
+    "mixtral-8x7b-32768",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it"
+]
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
