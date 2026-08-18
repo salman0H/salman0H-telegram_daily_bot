@@ -2,7 +2,6 @@ import sys
 from src import weather, news, sports, song, writer, telegram_sender
 
 def run():
-    # 1. Weather
     weather_data = weather.get_mashhad_weather()
     if weather_data and weather_data["current"]["temp"] != "N/A":
         current = weather_data["current"]
@@ -23,32 +22,28 @@ def run():
             
         telegram_sender.send_message(w_msg.strip())
 
-    # 2. Daily Insight
     try:
         insight = writer.generate_daily_insight()
         telegram_sender.send_message(f"💡 **دانش روز**\n\n{insight}")
-    except Exception as e:
-        print(f"Insight Error: {e}")
+    except Exception:
+        pass
 
-    # 3. News
     news_items = news.get_diverse_news()
     if news_items:
         news_text = writer.elaborate_news(news_items)
         telegram_sender.send_message(f"📰 **اخبار امروز**\n\n{news_text}")
 
-    # 4. Sports (Yesterday's Results)
     sports_data = sports.get_sports_results()
     if any(sports_data.values()):
         s_msg = "🏆 **نتایج مسابقات دیروز**\n\n"
         for sport, matches in sports_data.items():
             if matches:
-                s_msg += f"▪️ **{sport}**\n"
+                s_msg += f"▪️ **{sport}**\n\n"
                 for m in matches:
-                    s_msg += f"  - {m}\n"
+                    s_msg += f"⚽ {m}\n"
                 s_msg += "\n"
         telegram_sender.send_message(s_msg.strip())
 
-    # 5. Music
     target_song = song.get_trending_song()
     audio_file = song.download_audio(target_song) if target_song else None
     
