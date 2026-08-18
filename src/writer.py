@@ -37,7 +37,7 @@ def _call_groq(prompt: str, temperature: float = 0.2, fallback_data: str = None)
                 {"role": "user", "content": prompt}
             ],
             "temperature": temperature,
-            "max_tokens": 1024
+            "max_tokens": 4096
         }
         headers = {
             "Authorization": f"Bearer {config.GROQ_API_KEY}",
