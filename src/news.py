@@ -1,5 +1,13 @@
 import urllib.request
 import xml.etree.ElementTree as ET
+import re
+
+def _strip_html(text: str) -> str:
+    if not text:
+        return ""
+    clean = re.sub(r'<[^>]+>', '', text)
+    clean = re.sub(r'\s+', ' ', clean)
+    return clean.strip()
 
 def get_diverse_news():
     feeds = {
@@ -21,7 +29,12 @@ def get_diverse_news():
                 title = item.find('title').text if item.find('title') is not None else ''
                 link = item.find('link').text if item.find('link') is not None else ''
                 desc = item.find('description').text if item.find('description') is not None else ''
-                items.append({"title": title, "summary": desc, "link": link})
+                
+                items.append({
+                    "title": _strip_html(title),
+                    "summary": _strip_html(desc),
+                    "link": link.strip()
+                })
             news_data[category] = items
         except Exception:
             continue
